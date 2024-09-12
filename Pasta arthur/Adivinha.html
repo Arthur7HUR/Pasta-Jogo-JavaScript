@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Adivinhação com Fases e Pontos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: rgb(204, 204, 204);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        input {
+            padding: 10px;
+            margin: 10px 0;
+            width: 80%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #2997b3;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #1c6a7e;
+        }
+        .resultado {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        .tentativas, .pontos, .fase, .mensagemFase {
+            margin-top: 10px;
+            font-size: 16px;
+            color: #555;
+        }
+        #avancarFaseBtn {
+            display: none; /* Oculta o botão inicialmente */
+        }
+        .vitoria {
+            font-size: 24px;
+            color: blue;
+            font-weight: bold;
+            margin-top: 20px;
+            display: none; /* Oculta a mensagem de vitória inicialmente */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Jogo de Adivinhação com Fases e Pontos</h1>
+        <p id="mensagemFase" class="mensagemFase">Digite um número entre 1 e 10:</p>
+        <input type="number" id="palpiteInput" placeholder="Seu palpite" min="1">
+        <button onclick="fazerPalpite()">Enviar Palpite</button>
+        <button onclick="resetarJogo()">Resetar Jogo</button>
+        <button id="avancarFaseBtn" onclick="avancarFase()">Avançar para Próxima Fase</button>
+        <p class="resultado" id="resultado"></p>
+        <p class="tentativas" id="tentativasRestantes">Tentativas restantes: 10</p>
+        <p class="pontos" id="pontosAcumulados">Pontos: 0</p>
+        <p class="fase" id="faseAtual">Fase: 1</p>
+        <p class="vitoria" id="mensagemVitoria">Parabéns! Você ganhou o jogo!</p>
+    </div>
+
+    <script>
+        class JogoAdivinhacao {
+            constructor(tentativas = 10, fase = 1) {
+                this.fase = fase;
+                this.numeroSecreto = this.gerarNumeroSecreto();
+                this.maxTentativas = tentativas;
+                this.tentativas = 0;
+                this.pontos = 0;
+                this.atualizarMensagemFase();
+            }
+
+            // Gera um número aleatório de acordo com a fase atual
+            gerarNumeroSecreto() {
+                const maxNumero = this.fase * 10;
+                return Math.floor(Math.random() * maxNumero) + 1;
+            }
+
+            // Atualiza a mensagem de fase
+            atualizarMensagemFase() {
+                const maxNumero = this.fase * 10;
+                document.getElementById('mensagemFase').textContent = `Digite um número entre 1 e ${maxNumero}:`;
+            }
+
+            // Verifica se o palpite está correto
+            verificarPalpite(palpite) {
+                this.tentativas++;
+                
+                if (palpite === this.numeroSecreto) {
+                    this.pontos += 1000;
+                    return "Parabéns! Você adivinhou o número!";
+                } else if (palpite < this.numeroSecreto) {
+                    return "O número secreto é maior!";
+                } else {
+                    return "O número secreto é menor!";
+                }
+            }
+
+            // Verifica se o jogador atingiu o número máximo de tentativas
+            estaSemTentativas() {
+                return this.tentativas >= this.maxTentativas;
+            }
+
+            // Retorna o número de tentativas restantes
+            tentativasRestantes() {
+                return this.maxTentativas - this.tentativas;
+            }
+
+            // Verifica se o palpite está próximo do número secreto
+            estaProximo(palpite) {
+                const raio = Math.min(this.fase * 2, 10); // Aumenta o raio conforme a fase, com um máximo de 10 caracteres
+                return Math.abs(palpite - this.numeroSecreto) <= raio;
+            }
+
+            // Zera os pontos se o jogador perder
+            zerarPontos() {
+                this.pontos = 0;
+            }
+
+            // Atualiza a fase e reinicia o jogo com tentativas reduzidas
+            avancarFase() {
+                this.fase++;
+                if (this.fase > 10) this.fase = 10; // Limita a fase máxima
+                this.numeroSecreto = this.gerarNumeroSecreto();
+                this.tentativas = 0; // Reinicia as tentativas ao avançar de fase
+                this.atualizarMensagemFase(); // Atualiza a mensagem de fase
+            }
+
+            // Verifica se o jogador venceu o jogo
+            jogadorVenceu() {
+                return this.pontos >= 10000;
+            }
+        }
+
+        // Criando uma instância do jogo
+        let jogo = new JogoAdivinhacao();
+
+        // Função para capturar o palpite do usuário e atualizar o resultado
+        function fazerPalpite() {
+            const palpite = parseInt(document.getElementById('palpiteInput').value);
+            const resultadoElement = document.getElementById('resultado');
+            const tentativasElement = document.getElementById('tentativasRestantes');
+            const pontosElement = document.getElementById('pontosAcumulados');
+            const avancarFaseBtn = document.getElementById('avancarFaseBtn');
+            const mensagemVitoria = document.getElementById('mensagemVitoria');
+            const maxNumero = jogo.fase * 10;
+
+            if (isNaN(palpite)) {
+                resultadoElement.textContent = "Por favor, insira um número válido.";
+                resultadoElement.style.color = "red";
+                return;
+            }
+
+            if (palpite < 1 || palpite > maxNumero) {
+                resultadoElement.textContent = `O número deve estar entre 1 e ${maxNumero}.`;
+                resultadoElement.style.color = "red";
+                return;
+            }
+
+            if (jogo.estaSemTentativas()) {
+                resultadoElement.textContent = "Você perdeu! O número secreto era " + jogo.numeroSecreto;
+                resultadoElement.style.color = "red";
+                jogo.zerarPontos();
+                atualizarPontos();
+                return;
+            }
+
+            const resultado = jogo.verificarPalpite(palpite);
+            resultadoElement.textContent = resultado;
+
+            tentativasElement.textContent = "Tentativas restantes: " + jogo.tentativasRestantes();
+
+            if (palpite === jogo.numeroSecreto) {
+                resultadoElement.style.color = "green";
+                atualizarPontos();
+                document.getElementById('palpiteInput').disabled = true;
+                avancarFaseBtn.style.display = "inline"; // Mostra o botão para avançar a fase
+
+                if (jogo.jogadorVenceu()) {
+                    mensagemVitoria.style.display = "block"; // Exibe a mensagem de vitória
+                }
+            } else if (jogo.estaProximo(palpite)) {
+                resultadoElement.textContent += " Você está muito perto!";
+                resultadoElement.style.color = "yellow";
+            } else {
+                resultadoElement.style.color = "red";
+            }
+
+            if (jogo.estaSemTentativas()) {
+                resultadoElement.textContent = "Você perdeu! O número secreto era " + jogo.numeroSecreto;
+                resultadoElement.style.color = "red";
+                jogo.zerarPontos();
+                atualizarPontos();
+            }
+        }
+
+        // Função para resetar o jogo
+        function resetarJogo() {
+            jogo = new JogoAdivinhacao(); // Cria uma nova instância do jogo com 10 tentativas e fase 1
+            document.getElementById('palpiteInput').value = ''; // Limpa o campo de entrada
+            document.getElementById('palpiteInput').disabled = false; // Habilita o campo de entrada
+            document.getElementById('resultado').textContent = ''; // Limpa o resultado
+            document.getElementById('tentativasRestantes').textContent = "Tentativas restantes: " + jogo.maxTentativas; // Atualiza o número de tentativas
+            document.getElementById('pontosAcumulados').textContent = "Pontos: " + jogo.pontos; // Atualiza os pontos
+            document.getElementById('faseAtual').textContent = "Fase: " + jogo.fase; // Atualiza a fase
+            document.getElementById('avancarFaseBtn').style.display = "none"; // Oculta o botão de avançar fase
+            document.getElementById('mensagemVitoria').style.display = "none"; // Oculta a mensagem de vitória
+        }
+
+        // Função para avançar para a próxima fase
+        function avancarFase() {
+            jogo.avancarFase();
+            document.getElementById('faseAtual').textContent = "Fase: " + jogo.fase; // Atualiza a exibição da fase
+            document.getElementById('palpiteInput').value = ''; // Limpa o campo de entrada
+            document.getElementById('palpiteInput').disabled = false; // Habilita o campo de entrada
+            document.getElementById('resultado').textContent = ''; // Limpa o resultado
+            document.getElementById('tentativasRestantes').textContent = "Tentativas restantes: " + jogo.maxTentativas; // Atualiza o número de tentativas
+            document.getElementById('avancarFaseBtn').style.display = "none"; // Oculta o botão de avançar fase
+            document.getElementById('mensagemVitoria').style.display = "none"; // Oculta a mensagem de vitória
+        }
+
+        // Atualiza a exibição dos pontos acumulados
+        function atualizarPontos() {
+            document.getElementById('pontosAcumulados').textContent = "Pontos: " + jogo.pontos;
+            document.getElementById('tentativasRestantes').textContent = "Tentativas restantes: " + jogo.maxTentativas;
+        }
+    </script>
+
+</body>
+</html>
